@@ -1,7 +1,6 @@
 package com.udacity
 
 import android.app.NotificationManager
-import android.content.Intent
 import android.os.Bundle
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -14,16 +13,11 @@ class DetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_detail)
         setSupportActionBar(toolbar)
-
         val fileName = intent.getStringExtra(EXTRA_FILENAME)
-        findViewById<TextView>(R.id.fileName).apply { text = fileName }
+        findViewById<TextView>(R.id.file_name).apply { text = fileName }
         val status = intent.getStringExtra(EXTRA_STATUS)
-        findViewById<TextView>(R.id.status).apply { text = status }
-        ok_button.setOnClickListener{
-            finish()
-//            val intent = Intent(this, MainActivity::class.java)
-//            startActivity(intent)
-        }
+        findViewById<TextView>(R.id.status_text_view).apply { text = status }
+        ok_button.setOnClickListener{ finish() }
     }
 
     override fun onStart() {

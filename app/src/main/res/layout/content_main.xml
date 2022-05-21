@@ -24,7 +24,7 @@
         android:id="@+id/radio_group"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/custom_button"
+        app:layout_constraintBottom_toTopOf="@+id/custom_download_button"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageView">
 
@@ -54,7 +54,7 @@
     </RadioGroup>
 
     <com.udacity.LoadingButton
-        android:id="@+id/custom_button"
+        android:id="@+id/custom_download_button"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:layout_margin="20dp"
@@ -63,6 +63,54 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:progressBarColor="@color/colorPrimary"
-        app:textColor="@color/colorAccent" />
+        app:textColor="@color/white" />
+
+    <EditText
+        android:id="@+id/url_et"
+        android:layout_width="0dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="@dimen/layout_margin_20dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="@dimen/layout_margin_20dp"
+        android:background="@drawable/edit_text_background"
+        android:clickable="true"
+        android:ems="10"
+        android:focusable="true"
+        android:gravity="start|center"
+        android:hint="@string/enter_url_hint"
+        android:inputType="textUri"
+        android:lineSpacingExtra="1.5dp"
+        android:lines="8"
+        android:maxLength="500"
+        android:maxLines="10"
+        android:minLines="6"
+        android:padding="@dimen/layout_margin_10dp"
+        android:paddingStart="6dp"
+        android:paddingTop="3dp"
+        android:paddingEnd="6dp"
+        android:paddingBottom="3dp"
+        android:scrollbars="vertical"
+        android:scrollHorizontally="false"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/radio_group"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/textView"
+        app:layout_constraintTop_toBottomOf="@+id/imageView" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="15dp"
+        android:layout_marginBottom="8dp"
+        android:text="@string/url_label"
+        android:textSize="14sp"
+        android:textAllCaps="false"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        app:layout_constraintBottom_toBottomOf="@+id/url_et"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

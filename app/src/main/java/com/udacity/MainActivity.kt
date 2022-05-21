@@ -13,6 +13,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.View.OnFocusChangeListener
+import android.webkit.URLUtil
 import android.widget.RadioButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -22,7 +24,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 
 
-private val NOTIFICATION_ID = 0
+private const val NOTIFICATION_ID = 0
 const val EXTRA_FILENAME = "com.udacity.LoadApp.FILENAME"
 const val EXTRA_STATUS = "com.udacity.LoadApp.STATUS"
 
@@ -30,26 +32,29 @@ class MainActivity : AppCompatActivity() {
 
     private var downloadID: Long = 0
 
-    private lateinit var downloadUrl: String
+    private var downloadUrl: String = ""
     private var fileName: String = ""
     private lateinit var status: String
     private lateinit var notificationManager: NotificationManager
-    private lateinit var pendingIntent: PendingIntent
-    private lateinit var action: NotificationCompat.Action
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
-        custom_button.setOnClickListener {
+        custom_download_button.setOnClickListener {
             startDownloading()
         }
-        createChannel(
-            getString(R.string.notification_channel_id),
-            getString(R.string.notification_channel_name)
-        )
+
+        url_et.onFocusChangeListener = OnFocusChangeListener { view, hasFocus ->
+            if (hasFocus) {
+                radio_group.clearCheck()
+            }
+        }
+
+        createChannel(getString(R.string.notification_channel_id), getString(R.string.notification_channel_name))
     }
+
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -60,9 +65,9 @@ class MainActivity : AppCompatActivity() {
                 val currStatus = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
                 cursor.close()
                 if (currStatus == DownloadManager.STATUS_FAILED) {
-                    status = "Failed"
+                    status = getString(R.string.status_failed)
                 } else if (currStatus == DownloadManager.STATUS_SUCCESSFUL) {
-                    status = "Success"
+                    status = getString(R.string.status_success)
                 }
             }
 
@@ -83,19 +88,27 @@ class MainActivity : AppCompatActivity() {
         if (view is RadioButton) {
             when (view.getId()) {
                 R.id.glide_button -> {
+                    clearUrlEditText()
                     downloadUrl = URL_GLIDE
                     fileName = applicationContext.getString(R.string.glide_button_text)
                 }
                 R.id.loadapp_button -> {
+                    clearUrlEditText()
                     downloadUrl = URL_LOAD_APP
                     fileName = applicationContext.getString(R.string.loadapp_button_text)
                 }
                 R.id.retrofit_button -> {
+                    clearUrlEditText()
                     downloadUrl = URL_RETROFIT
                     fileName = applicationContext.getString(R.string.retrofit_button_text)
                 }
             }
         }
+    }
+
+    private fun clearUrlEditText() {
+        if (url_et.text.isNullOrBlank()) return
+        url_et.text = null
     }
 
     private fun createChannel(channelId: String, channelName: String) {
@@ -108,7 +121,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             notificationChannel.enableVibration(true)
-            notificationChannel.description = "Repository downloaded"
+            notificationChannel.description = getString(R.string.repo_downloaded)
 
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(notificationChannel)
@@ -116,10 +129,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun NotificationManager.sendNotification(
-        applicationContext: Context,
-        fileName: String,
-        status: String
-    ) {
+        applicationContext: Context, fileName: String, status: String) {
         val contentIntent = Intent(applicationContext, DetailActivity::class.java).apply {
             putExtra(EXTRA_FILENAME, fileName)
             putExtra(EXTRA_STATUS, status)
@@ -135,41 +145,55 @@ class MainActivity : AppCompatActivity() {
             )
             .setContentIntent(contentPendingIntent)
             .setAutoCancel(true)
-            .addAction(
-                R.drawable.ic_assistant_black_24dp,
-                applicationContext.getString(R.string.notification_button),
+            .addAction(R.drawable.ic_assistant_black_24dp,
+                applicationContext.getString(R.string.notification_btn_text),
                 contentPendingIntent
-            )
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            ).setPriority(NotificationCompat.PRIORITY_HIGH)
 
         notify(NOTIFICATION_ID, builder.build())
     }
 
     private fun download() {
-        val request = DownloadManager.Request(Uri.parse(downloadUrl))
-            .setTitle(getString(R.string.app_name))
-            .setDescription(getString(R.string.app_description))
-            .setRequiresCharging(false)
-            .setAllowedOverMetered(true)
-            .setAllowedOverRoaming(true)
-        val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
-        downloadID = downloadManager.enqueue(request)// enqueue puts the download request in the queue.
+        val urlFromEditText = url_et.text.toString()
+        if (urlFromEditText.isNotEmpty() || urlFromEditText.isNotBlank()) {
+            val url = setUrlAfterValidation(urlFromEditText)
+            if (url.isNotBlank()) {
+                downloadUrl = url
+            }
+        }
+        if (downloadUrl.isNotBlank()) {
+            disableDownloadButton()
+            val request = DownloadManager.Request(Uri.parse(downloadUrl))
+                .setTitle(getString(R.string.app_name))
+                .setDescription(getString(R.string.app_description))
+                .setRequiresCharging(false)
+                .setAllowedOverMetered(true)
+                .setAllowedOverRoaming(true)
+            val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+            downloadID =
+                downloadManager.enqueue(request)// enqueue puts the download request in the queue.
+        } else {
+            Toast.makeText(applicationContext,getString(R.string.invalid_link_msg), Toast.LENGTH_SHORT).show()
+        }
     }
 
+    private fun setUrlAfterValidation(urlFromEditText: String): String {
+        if (!URLUtil.isValidUrl(urlFromEditText)) return ""
+        return urlFromEditText
+    }
 
     private fun startDownloading() {
         val selectedRd = radio_group?.checkedRadioButtonId
-        if (selectedRd == -1) {
-            Toast.makeText(applicationContext, "Please select an option", Toast.LENGTH_SHORT).show()
+        if (selectedRd == -1 && url_et.text.isNullOrBlank()) {
+            Toast.makeText(applicationContext, getString(R.string.option_not_selected_msg), Toast.LENGTH_SHORT).show()
         } else {
-            disableDownloadButton()
             download()
         }
     }
 
     private fun disableDownloadButton() {
-        custom_button.buttonState = ButtonState.Loading
-        custom_button.isClickable = false
+        custom_download_button.buttonState = ButtonState.Loading
+        custom_download_button.isClickable = false
 
     }
 
